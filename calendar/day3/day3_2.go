@@ -28,16 +28,23 @@ func main() {
 		numbers = append(numbers, num)
 	}
 
-	oxygenRating := search(numbers, 0, bitCount, true)
-	co2Rating := search(numbers, 0, bitCount, false)
+	oxygenChannel := make(chan string)
+	co2Channel := make(chan string)
+
+	go search(numbers, 0, bitCount, true, oxygenChannel)
+	go search(numbers, 0, bitCount, false, co2Channel)
+
+	oxygenRating := <-oxygenChannel
+	co2Rating := <-co2Channel
 
 	fmt.Println(oxygenRating, co2Rating)
 	fmt.Println(binaryToInt(oxygenRating) * binaryToInt(co2Rating))
 }
 
-func search(numbers []string, index int, bitCount int, mostCommonSearch bool) string {
+func search(numbers []string, index int, bitCount int, mostCommonSearch bool, channel chan string) {
 	if len(numbers) == 1 {
-		return numbers[0]
+		channel <- numbers[0]
+		return
 	}
 
 	nextBitCount := 0
@@ -63,7 +70,7 @@ func search(numbers []string, index int, bitCount int, mostCommonSearch bool) st
 		}
 	}
 
-	return search(tempNumbers, index + 1, nextBitCount, mostCommonSearch)
+	search(tempNumbers, index + 1, nextBitCount, mostCommonSearch, channel)
 }
 
 func nextBit(number string, index int) int {
